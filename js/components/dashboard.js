@@ -8,6 +8,10 @@ class DashboardView {
     }
 
     render(data) {
+        if (!data || !data.project) {
+            this.container.innerHTML = '<div class="glass" style="padding: 2rem; text-align: center;">Cargando datos del proyecto...</div>';
+            return;
+        }
         const totalDuration = this.calculateTotalDuration(data);
         const completion = this.calculateCompletion(data);
 

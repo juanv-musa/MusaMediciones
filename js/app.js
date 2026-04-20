@@ -16,15 +16,21 @@ class App {
             dashboard: document.getElementById('view-dashboard'),
             projects: document.getElementById('view-projects'),
             clients: document.getElementById('view-clients'),
-            budget: document.getElementById('view-budget')
+            budget: document.getElementById('view-budget'),
+            planning: document.getElementById('view-planning')
         };
         
-        this.components = {
-            dashboard: new window.DashboardView(this.views.dashboard),
-            projects: new window.ProjectManagerView(this.views.projects),
-            clients: new window.ClientManagerView(this.views.clients),
-            budget: new window.BudgetView(this.views.budget)
-        };
+        try {
+            this.components = {
+                dashboard: new window.DashboardView(this.views.dashboard),
+                projects: new window.ProjectManagerView(this.views.projects),
+                clients: new window.ClientManagerView(this.views.clients),
+                budget: new window.BudgetView(this.views.budget),
+                planning: new window.PlanningView(this.views.planning)
+            };
+        } catch (e) {
+            console.error("MusaApp: Error instanciando componentes:", e);
+        }
 
         this.initLogin();
     }
@@ -104,7 +110,7 @@ class App {
         if (btnExcel) btnExcel.addEventListener('click', () => this.exportToExcel());
 
         this.switchView('dashboard');
-        if (window.state) {
+        if (window.state && window.state.data) {
             this.updateGlobalUI(window.state.data);
             this.updatePrintFields(window.state.data, window.state.clients);
         }
@@ -123,17 +129,24 @@ class App {
     }
 
     updateGlobalUI(data) {
+        if (!data || !data.project) return;
         const totalVal = document.getElementById('project-total-val');
-        if (totalVal) totalVal.textContent = data.project.total.toLocaleString('es-ES', { minimumFractionDigits: 2 });
+        if (totalVal) totalVal.textContent = (data.project.total || 0).toLocaleString('es-ES', { minimumFractionDigits: 2 });
         const prog = document.getElementById('project-progress-bar');
         const progTxt = document.getElementById('progress-text');
         const reduced = document.getElementById('project-total-reduced');
         let filled = 0; let totalCnt = 0;
-        data.chapters.forEach(c => c.items.forEach(i => { totalCnt++; if(i.qty > 0) filled++; }));
+        if (data.chapters) {
+            data.chapters.forEach(c => {
+                if (c.items) {
+                    c.items.forEach(i => { totalCnt++; if(i.qty > 0) filled++; });
+                }
+            });
+        }
         const pct = totalCnt > 0 ? Math.round((filled/totalCnt)*100) : 0;
         if (prog) prog.style.width = `${pct}%`;
         if (progTxt) progTxt.textContent = `${pct}%`;
-        if (reduced) reduced.textContent = data.project.pem.toLocaleString('es-ES', { maximumFractionDigits: 0 }) + '€';
+        if (reduced) reduced.textContent = (data.project.pem || 0).toLocaleString('es-ES', { maximumFractionDigits: 0 }) + '€';
     }
 
     updatePrintFields(data, clientList) {

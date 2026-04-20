@@ -177,7 +177,7 @@ class State {
     }
 
     calculate() {
-        if (!this.data) return;
+        if (!this.data || !this.data.project) return;
         let pem = 0;
         this.data.chapters.forEach(chapter => {
             let chapterTotal = 0;

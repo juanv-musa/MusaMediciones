@@ -19,8 +19,12 @@ class PlanningView {
     }
 
     render(data) {
+        if (!data || !data.project) {
+            this.container.innerHTML = '<div class="glass" style="padding: 2rem; text-align: center;">Cargando planificación...</div>';
+            return;
+        }
         const flattened = this.getFlattenedItems(data);
-        const minDate = new Date(data.project.startDate);
+        const minDate = new Date(data.project.startDate || new Date());
         const maxDate = this.getMaxDate(flattened, minDate);
         const totalDays = Math.ceil((maxDate - minDate) / (1000 * 60 * 60 * 24)) + 10;
 

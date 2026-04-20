@@ -10,6 +10,10 @@ class BudgetView {
     }
 
     render(data) {
+        if (!data || !data.project) {
+            this.container.innerHTML = '<div class="glass" style="padding: 2rem; text-align: center;">Cargando presupuesto...</div>';
+            return;
+        }
         const p = data.project;
         this.container.innerHTML = `
             <div class="budget-view" style="animation: fadeIn 0.4s ease-out;">
