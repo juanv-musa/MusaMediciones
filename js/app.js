@@ -44,7 +44,7 @@ class App {
         }
 
         this.btnLogin.addEventListener('click', () => {
-            if (this.loginKeyInput && this.loginKeyInput.value === window.SHARED_ACCESS_KEY) {
+            if (this.loginKeyInput && this.loginKeyInput.value.trim() === window.SHARED_ACCESS_KEY) {
                 sessionStorage.setItem('musa_auth', 'true');
                 this.loginOverlay.style.display = 'none';
                 if (window.state) window.state.initFirebase();
