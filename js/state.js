@@ -13,6 +13,10 @@ class State {
     }
 
     async initFirebase() {
+        if (!window.firebase) {
+            console.error("MusaState: Firebase no detectado. Revisa la conexión o carga de scripts.");
+            return;
+        }
         try {
             const app = window.firebase.initializeApp(window.FIREBASE_CONFIG);
             this.db = window.firebase.getFirestore(app);
