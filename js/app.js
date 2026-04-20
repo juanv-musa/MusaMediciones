@@ -7,6 +7,11 @@
 class App {
     constructor() {
         this.navItems = document.querySelectorAll('.nav-item');
+        this.loginOverlay = document.getElementById('login-overlay');
+        this.loginKeyInput = document.getElementById('login-key');
+        this.btnLogin = document.getElementById('btn-login');
+        this.loginError = document.getElementById('login-error');
+
         this.views = {
             dashboard: document.getElementById('view-dashboard'),
             projects: document.getElementById('view-projects'),
