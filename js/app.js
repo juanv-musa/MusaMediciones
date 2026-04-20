@@ -30,6 +30,11 @@ class App {
     }
 
     initLogin() {
+        if (!this.btnLogin || !this.loginOverlay) {
+            console.warn("MusaApp: Elementos de login no encontrados. ¿Ya estás dentro?");
+            return;
+        }
+
         // Check session storage
         if (sessionStorage.getItem('musa_auth') === 'true') {
             this.loginOverlay.style.display = 'none';
@@ -39,15 +44,21 @@ class App {
         }
 
         this.btnLogin.addEventListener('click', () => {
-            if (this.loginKeyInput.value === window.SHARED_ACCESS_KEY) {
+            if (this.loginKeyInput && this.loginKeyInput.value === window.SHARED_ACCESS_KEY) {
                 sessionStorage.setItem('musa_auth', 'true');
                 this.loginOverlay.style.display = 'none';
                 if (window.state) window.state.initFirebase();
                 this.init();
             } else {
-                this.loginError.style.display = 'block';
+                if (this.loginError) this.loginError.style.display = 'block';
             }
         });
+
+        if (this.loginKeyInput) {
+            this.loginKeyInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') this.btnLogin.click();
+            });
+        }
     }
 
     init() {
@@ -254,4 +265,15 @@ class App {
     }
 }
 
-window.addEventListener('load', () => window.app = new App());
+// Inicialización segura
+const startApp = () => {
+    if (!window.app) {
+        window.app = new App();
+    }
+};
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', startApp);
+} else {
+    startApp();
+}
