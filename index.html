@@ -5,6 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MusaMediciones | Musaraña Gestión de Museos</title>
     
+    <script>
+        // CAPTURADOR GLOBAL DE ERRORES para mostrar en pantalla
+        window.onerror = function(msg, url, line) {
+            setTimeout(() => {
+                const errDiv = document.getElementById('login-error');
+                if (errDiv) {
+                    errDiv.style.display = 'block';
+                    errDiv.innerHTML += `<br><span style="font-size:10px;color:black;">ERR: ${msg} <br> ${url}:${line}</span>`;
+                } else {
+                    alert("ERR: " + msg);
+                }
+            }, 500);
+            return false;
+        };
+        window.onclick = function(e) {
+            if(e.target && e.target.id === 'btn-login') {
+                if(!window.app) alert("app.js NO ha cargado correctamente.");
+                else if(!window.firebase) alert("Firebase NO ha cargado.");
+            }
+        };
+    </script>
+    
     <!-- Fonts: Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
