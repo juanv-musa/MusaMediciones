@@ -56,7 +56,7 @@ class App {
             }
         }
 
-        // El event listener siempre debe registrarse, aunque Firebase acabe de fallar al cargar
+        // El event listener siempre debe registrarse
         this.btnLogin.addEventListener('click', async () => {
             // Reintentar coger auth si falló o cargó tarde
             if (!auth && window.firebase && window.state) {
@@ -67,8 +67,9 @@ class App {
             if (!auth) {
                 if (this.loginError) {
                     this.loginError.style.display = 'block';
-                    this.loginError.textContent = "Error de conexión a la Nube. Revisa tu internet o adblocker.";
+                    this.loginError.textContent = "Error interno: Auth no inicializado.";
                 }
+                alert("Error crítico: Firebase no se pudo iniciar. Esto significa que la importación fue bloqueada por tu navegador o adblocker.");
                 return;
             }
 
@@ -86,10 +87,11 @@ class App {
             try {
                 this.btnLogin.textContent = "Iniciando...";
                 await window.firebase.signInWithEmailAndPassword(auth, email, pwd);
-                this.btnLogin.textContent = "Entrar";
+                this.btnLogin.textContent = "¡Entrando!";
             } catch (err) {
                 this.btnLogin.textContent = "Entrar";
                 console.error("Login Error:", err);
+                alert("Auth Error: " + err.message);
                 if (this.loginError) {
                     this.loginError.style.display = 'block';
                     this.loginError.textContent = "Usuario o contraseña incorrectos.";
