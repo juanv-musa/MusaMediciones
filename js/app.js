@@ -8,6 +8,7 @@ class App {
     constructor() {
         this.navItems = document.querySelectorAll('.nav-item');
         this.loginOverlay = document.getElementById('login-overlay');
+        this.loginEmailInput = document.getElementById('login-email');
         this.loginKeyInput = document.getElementById('login-key');
         this.btnLogin = document.getElementById('btn-login');
         this.loginError = document.getElementById('login-error');
@@ -38,30 +39,46 @@ class App {
     initLogin() {
         if (!this.btnLogin || !this.loginOverlay) return;
 
-        // Recuperar clave configurada o usar la de emergencia
-        const validKey = (window.SHARED_ACCESS_KEY || "Musa2026").trim();
+        if (window.firebase && window.state) {
+            window.state.initFirebaseAppOnly();
+            const auth = window.state.auth;
 
-        // Si ya está autenticado, entrar directo
-        if (sessionStorage.getItem('musa_auth') === 'true') {
-            this.loginOverlay.style.display = 'none';
-            this.enterApp();
-            return;
-        }
+            if (auth) {
+                window.firebase.onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        this.loginOverlay.style.display = 'none';
+                        this.enterApp();
+                    } else {
+                        this.loginOverlay.style.display = 'flex';
+                    }
+                });
 
-        this.btnLogin.addEventListener('click', () => {
-            const inputKey = this.loginKeyInput ? this.loginKeyInput.value.trim() : "";
-            
-            if (inputKey === validKey || inputKey === "MUSA-DEBUG-2026") {
-                sessionStorage.setItem('musa_auth', 'true');
-                this.loginOverlay.style.display = 'none';
-                this.enterApp();
-            } else {
-                if (this.loginError) {
-                    this.loginError.style.display = 'block';
-                    this.loginError.textContent = "Clave incorrecta. Intenta con 'Musa2026'";
-                }
+                this.btnLogin.addEventListener('click', async () => {
+                    const email = this.loginEmailInput ? this.loginEmailInput.value.trim() : "";
+                    const pwd = this.loginKeyInput ? this.loginKeyInput.value.trim() : "";
+                    
+                    if (!email || !pwd) {
+                        if (this.loginError) {
+                            this.loginError.style.display = 'block';
+                            this.loginError.textContent = "Introduce correo y contraseña.";
+                        }
+                        return;
+                    }
+
+                    try {
+                        this.btnLogin.textContent = "Iniciando...";
+                        await window.firebase.signInWithEmailAndPassword(auth, email, pwd);
+                        this.btnLogin.textContent = "Entrar";
+                    } catch (err) {
+                        this.btnLogin.textContent = "Entrar";
+                        if (this.loginError) {
+                            this.loginError.style.display = 'block';
+                            this.loginError.textContent = "Usuario o contraseña incorrectos.";
+                        }
+                    }
+                });
             }
-        });
+        }
 
         if (this.loginKeyInput) {
             this.loginKeyInput.addEventListener('keydown', (e) => {

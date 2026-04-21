@@ -256,8 +256,9 @@
         <img src="assets/logo.png" alt="Musaraña" style="width: 150px; margin-bottom: 1rem;">
         <h2 style="font-weight: 800; color: var(--primary);">MusaMediciones Cloud</h2>
         <div style="background: white; padding: 2rem; border-radius: var(--radius-xl); box-shadow: 0 20px 40px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center;">
-            <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Introduce la clave de acceso de tu equipo para entrar.</p>
-            <input type="password" id="login-key" placeholder="Clave de acceso" style="width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1rem; font-size: 1rem; text-align: center;">
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Inicia sesión para entrar a tu cuenta en la nube.</p>
+            <input type="email" id="login-email" placeholder="Correo Electrónico" style="width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 0.8rem; font-size: 1rem; text-align: center;">
+            <input type="password" id="login-key" placeholder="Contraseña" style="width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1rem; font-size: 1rem; text-align: center;">
             <button id="btn-login" class="btn-musa" style="width: 100%; padding: 1rem;">Entrar</button>
             <div id="login-error" style="color: #ef4444; font-size: 0.8rem; margin-top: 1rem; display: none;">Clave incorrecta. Inténtalo de nuevo.</div>
         </div>
@@ -267,8 +268,9 @@
     <script src="js/firebase-config.js"></script>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, doc, setDoc, deleteDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-        window.firebase = { initializeApp, getFirestore, collection, addDoc, getDocs, doc, setDoc, deleteDoc, query, where, onSnapshot };
+        window.firebase = { initializeApp, getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, getFirestore, collection, addDoc, getDocs, doc, setDoc, deleteDoc, query, where, onSnapshot };
     </script>
     <script type="module" src="js/state.js"></script>
     <script type="module" src="js/components/dashboard.js"></script>

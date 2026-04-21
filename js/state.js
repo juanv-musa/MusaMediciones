@@ -6,20 +6,40 @@
 class State {
     constructor() {
         this.listeners = [];
+        this.app = null;
         this.db = null;
+        this.auth = null;
         this.data = null;
         this.projects = [];
         this.clients = [];
     }
 
+    initFirebaseAppOnly() {
+        if (!window.firebase) return false;
+        try {
+            if (!this.app) {
+                this.app = window.firebase.initializeApp(window.FIREBASE_CONFIG);
+                this.auth = window.firebase.getAuth(this.app);
+            }
+            return true;
+        } catch (error) {
+            console.error("MusaState: Firebase App Init Error:", error);
+            return false;
+        }
+    }
+
     async initFirebase() {
-        if (!window.firebase) {
-            console.error("MusaState: Firebase no detectado. Revisa la conexión o carga de scripts.");
+        if (!this.app) {
+            if (!this.initFirebaseAppOnly()) return;
+        }
+
+        if (!this.auth.currentUser) {
+            console.warn("MusaState: Usuario no autenticado. Lecturas detenidas.");
             return;
         }
+
         try {
-            const app = window.firebase.initializeApp(window.FIREBASE_CONFIG);
-            this.db = window.firebase.getFirestore(app);
+            this.db = window.firebase.getFirestore(this.app);
             
             // Sync Clients
             window.firebase.onSnapshot(window.firebase.collection(this.db, 'clients'), (snapshot) => {
@@ -46,7 +66,7 @@ class State {
                 }
             });
         } catch (error) {
-            console.error("Firebase Init Error:", error);
+            console.error("Firebase Auth Init Error:", error);
         }
     }
 
