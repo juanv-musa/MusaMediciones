@@ -39,10 +39,11 @@ class App {
     initLogin() {
         if (!this.btnLogin || !this.loginOverlay) return;
 
+        // Intentamos inicializar Firebase Auth temprano para el onAuthStateChanged
+        let auth = null;
         if (window.firebase && window.state) {
             window.state.initFirebaseAppOnly();
-            const auth = window.state.auth;
-
+            auth = window.state.auth;
             if (auth) {
                 window.firebase.onAuthStateChanged(auth, (user) => {
                     if (user) {
@@ -52,33 +53,49 @@ class App {
                         this.loginOverlay.style.display = 'flex';
                     }
                 });
-
-                this.btnLogin.addEventListener('click', async () => {
-                    const email = this.loginEmailInput ? this.loginEmailInput.value.trim() : "";
-                    const pwd = this.loginKeyInput ? this.loginKeyInput.value.trim() : "";
-                    
-                    if (!email || !pwd) {
-                        if (this.loginError) {
-                            this.loginError.style.display = 'block';
-                            this.loginError.textContent = "Introduce correo y contraseña.";
-                        }
-                        return;
-                    }
-
-                    try {
-                        this.btnLogin.textContent = "Iniciando...";
-                        await window.firebase.signInWithEmailAndPassword(auth, email, pwd);
-                        this.btnLogin.textContent = "Entrar";
-                    } catch (err) {
-                        this.btnLogin.textContent = "Entrar";
-                        if (this.loginError) {
-                            this.loginError.style.display = 'block';
-                            this.loginError.textContent = "Usuario o contraseña incorrectos.";
-                        }
-                    }
-                });
             }
         }
+
+        // El event listener siempre debe registrarse, aunque Firebase acabe de fallar al cargar
+        this.btnLogin.addEventListener('click', async () => {
+            // Reintentar coger auth si falló o cargó tarde
+            if (!auth && window.firebase && window.state) {
+                window.state.initFirebaseAppOnly();
+                auth = window.state.auth;
+            }
+
+            if (!auth) {
+                if (this.loginError) {
+                    this.loginError.style.display = 'block';
+                    this.loginError.textContent = "Error de conexión a la Nube. Revisa tu internet o adblocker.";
+                }
+                return;
+            }
+
+            const email = this.loginEmailInput ? this.loginEmailInput.value.trim() : "";
+            const pwd = this.loginKeyInput ? this.loginKeyInput.value.trim() : "";
+            
+            if (!email || !pwd) {
+                if (this.loginError) {
+                    this.loginError.style.display = 'block';
+                    this.loginError.textContent = "Introduce correo y contraseña.";
+                }
+                return;
+            }
+
+            try {
+                this.btnLogin.textContent = "Iniciando...";
+                await window.firebase.signInWithEmailAndPassword(auth, email, pwd);
+                this.btnLogin.textContent = "Entrar";
+            } catch (err) {
+                this.btnLogin.textContent = "Entrar";
+                console.error("Login Error:", err);
+                if (this.loginError) {
+                    this.loginError.style.display = 'block';
+                    this.loginError.textContent = "Usuario o contraseña incorrectos.";
+                }
+            }
+        });
 
         if (this.loginKeyInput) {
             this.loginKeyInput.addEventListener('keydown', (e) => {
