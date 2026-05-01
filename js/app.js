@@ -1,19 +1,16 @@
 console.log("MusaApp: ARCHIVO JS CARGADO CORRECTAMENTE");
 
-/**
- * MusaMediciones Application Controller
- * High-Fidelity Presto/Gropit report engine
- * Updated for GG/BI/PEC cascade
- */
-
 class App {
     constructor() {
+        console.log("MusaApp: Iniciando Constructor de App...");
         this.navItems = document.querySelectorAll('.nav-item');
         this.loginOverlay = document.getElementById('login-overlay');
         this.loginEmailInput = document.getElementById('login-email');
         this.loginKeyInput = document.getElementById('login-key');
         this.btnLogin = document.getElementById('btn-login');
         this.loginError = document.getElementById('login-error');
+
+        this.authListenerAttached = false;
 
         this.views = {
             dashboard: document.getElementById('view-dashboard'),
@@ -35,11 +32,11 @@ class App {
             console.error("MusaApp: Error instanciando componentes:", e);
         }
 
-        this.authListenerAttached = false;
         this.initLogin();
     }
 
     initLogin() {
+        console.log("MusaApp: Ejecutando initLogin...");
         if (!this.btnLogin || !this.loginOverlay) {
             console.error("MusaApp: Elementos de login no encontrados.");
             return;
@@ -47,13 +44,13 @@ class App {
 
         // Intentamos inicializar Firebase Auth temprano para el onAuthStateChanged
         const setupListener = () => {
-            console.log("MusaApp: Configurando Auth Listener...");
-            if (window.firebase && window.state) {
+            if (window.firebase && window.state && !this.authListenerAttached) {
+                console.log("MusaApp: Conectando detector de sesión (onAuthStateChanged)...");
                 window.state.initFirebaseAppOnly();
                 const auth = window.state.auth;
-                if (auth && !this.authListenerAttached) {
+                if (auth) {
                     window.firebase.onAuthStateChanged(auth, (user) => {
-                        console.log("MusaApp: Auth State Changed:", user ? user.email : "No user");
+                        console.log("MusaApp: Cambio detectado en la sesión ->", user ? user.email : "SESIÓN CERRADA");
                         if (user) {
                             this.loginOverlay.style.display = 'none';
                             this.enterApp();
@@ -68,10 +65,13 @@ class App {
             return false;
         };
 
-        // Primer intento
+        // Reintentos automáticos por si Firebase tarda en cargar
         setupListener();
+        setTimeout(setupListener, 500);
+        setTimeout(setupListener, 2000);
+        setTimeout(setupListener, 5000);
 
-        // El event listener siempre debe registrarse
+        // El event listener siempre debe registrarse para el clic manual
         this.btnLogin.addEventListener('click', async () => {
             console.log("MusaApp: Click en botón Entrar detectado.");
             
