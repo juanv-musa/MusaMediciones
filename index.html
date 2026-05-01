@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MusaMediciones | Musaraña Gestión de Museos</title>
+    
+    <script>
+        // CAPTURADOR GLOBAL DE ERRORES para mostrar en pantalla
+        window.onerror = function(msg, url, line) {
+            setTimeout(() => {
+                const errDiv = document.getElementById('login-error');
+                if (errDiv) {
+                    errDiv.style.display = 'block';
+                    errDiv.innerHTML += `<br><span style="font-size:10px;color:black;">ERR: ${msg} <br> ${url}:${line}</span>`;
+                } else {
+                    alert("ERR: " + msg);
+                }
+            }, 500);
+            return false;
+        };
+        window.onclick = function(e) {
+            if(e.target && e.target.id === 'btn-login') {
+                if(!window.app) alert("app.js NO ha cargado correctamente.");
+                else if(!window.firebase) alert("Firebase NO ha cargado.");
+            }
+        };
+    </script>
+    
+    <!-- Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    
+    <!-- Icons: Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="icon" type="image/png" href="assets/logo.png">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        @page {
+            size: A4;
+            margin: 20mm;
+        }
+
+        @media print {
+            body { 
+                background: white !important;
+                color: black !important;
+                font-family: 'Inter', sans-serif;
+                font-size: 10pt;
+            }
+            .background-blobs, aside, .user-actions, .price-library, 
+            #btn-save, #btn-export-excel, #btn-new-project-quick, 
+            #add-measurement-btn, .add-item-btn, .chapter-actions,
+            #measurement-panel, .ignore-print, #project-meta-editor {
+                display: none !important;
+            }
+
+            #app {
+                display: block !important;
+                grid-template-columns: 1fr !important;
+            }
+            
+            header {
+                display: none !important;
+            }
+
+            main {
+                padding: 0 !important;
+                margin: 0 !important;
+                overflow: visible !important;
+            }
+
+            .view-container {
+                display: block !important;
+            }
+
+            .glass {
+                background: white !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+
+            /* Report Sections */
+            .print-section {
+                page-break-before: always;
+                display: block !important;
+            }
+            .print-section:first-child {
+                page-break-before: auto;
+            }
+
+            /* Professional Header (Matching Screenshot) */
+            .print-header {
+                display: block !important;
+                margin-bottom: 40px;
+                padding-bottom: 20px;
+                text-transform: uppercase;
+            }
+            .print-header-title {
+                font-size: 14pt;
+                font-weight: 800;
+                margin-bottom: 25px;
+            }
+            .print-header-item {
+                display: flex;
+                gap: 15px;
+                margin-bottom: 8px;
+                font-size: 9pt;
+            }
+            .print-header-label {
+                width: 120px;
+                font-weight: 700;
+            }
+
+            /* Summary Page */
+            .summary-table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-bottom: 30px;
+            }
+            .summary-table th, .summary-table td {
+                padding: 10px 0;
+                text-align: right;
+            }
+            .summary-table td.desc {
+                text-align: left;
+                text-transform: uppercase;
+            }
+
+            /* Certification */
+            .certification-text {
+                margin: 40px 0;
+                line-height: 1.8;
+                font-weight: 600;
+                text-transform: uppercase;
+            }
+            .signature-block {
+                margin-top: 60px;
+                text-align: right;
+            }
+
+            footer.print-footer {
+                display: block !important;
+                position: fixed;
+                bottom: 10mm;
+                left: 20mm;
+                right: 20mm;
+                border-top: 1px solid #ddd;
+                padding-top: 5mm;
+                font-size: 7pt;
+                color: #666;
+                text-align: center;
+            }
+            .page-number:after { content: counter(page); }
+        }
+
+        .print-only, .print-section { display: none; }
+    </style>
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <div id="app">
+        <header class="glass">
+            <div class="logo-container">
+                <img src="assets/logo.png" alt="Musaraña Logo" class="header-logo-img">
+            </div>
+            <div class="project-info" style="display: flex; align-items: center; gap: 1rem;">
+                <span id="current-project-name" contenteditable="true" style="font-weight: 700; color: var(--text-primary); font-size: 1.1rem; padding: 2px 8px; border-radius: 4px; border: 1px dashed transparent; transition: all 0.2s;">Sin Proyecto</span>
+                <span id="total-budget-badge" class="glass" style="padding: 0.5rem 1.2rem; border-radius: 50px; font-size: 0.95rem; font-weight: 700; color: var(--primary);">
+                    Total: <span id="project-total-val">0,00</span>€
+                </span>
+            </div>
+            <div class="user-actions" style="display: flex; gap: 1rem;">
+                <button id="btn-export-excel" class="btn-musa" style="background: white; color: #059669; border: 1px solid #dcfce7;">
+                    Excel (.csv)
+                </button>
+                <button id="btn-new-project-quick" class="btn-musa" title="Nuevo Presupuesto" style="background: white; border: 1px solid var(--border); color: var(--text-secondary);">
+                    <i data-lucide="plus" style="width: 18px;"></i>
+                </button>
+                <button id="btn-save" class="btn-musa">
+                    Guardar Cambios
+                </button>
+                <button id="btn-logout" class="btn-musa" title="Cerrar Sesión" style="background: #fee2e2; border: 1px solid #fecaca; color: #b91c1c;">
+                    <i data-lucide="log-out" style="width: 18px;"></i>
+                </button>
+            </div>
+        </header>
+
+        <aside class="glass">
+            <nav id="sidebar-nav">
+                <ul>
+                    <li><a href="#dashboard" class="nav-item active" data-view="dashboard">
+                        <i data-lucide="layout-dashboard"></i>
+                        <span class="nav-text">Dashboard</span>
+                    </a></li>
+                    <li><a href="#projects" class="nav-item" data-view="projects">
+                        <i data-lucide="folder-kanban"></i>
+                        <span class="nav-text">Mis Proyectos</span>
+                    </a></li>
+                    <li><a href="#clients" class="nav-item" data-view="clients">
+                        <i data-lucide="users"></i>
+                        <span class="nav-text">Clientes</span>
+                    </a></li>
+                    <li><hr style="border: none; border-top: 1px solid var(--border); margin: 0.5rem 0;"></li>
+                    <li><a href="#budget" class="nav-item" data-view="budget">
+                        <i data-lucide="calculator"></i>
+                        <span class="nav-text">Presupuesto</span>
+                    </a></li>
+                    <li><a href="#planning" class="nav-item" data-view="planning">
+                        <i data-lucide="calendar-range"></i>
+                        <span class="nav-text">Planificación</span>
+                    </a></li>
+                </ul>
+            </nav>
+
+            <div class="quick-stats" style="margin-top: auto; padding: 1.2rem; border-radius: var(--radius-lg); background: white; border: 1px solid var(--border);">
+                <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.6rem; font-weight: 700; text-transform: uppercase;">Progreso PEM</div>
+                <div style="height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; margin-bottom: 0.8rem;">
+                    <div id="project-progress-bar" style="width: 35%; height: 100%; background: var(--primary);"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600;">
+                    <span id="progress-text">0%</span>
+                    <span id="project-total-reduced" style="color: var(--primary);">0€</span>
+                </div>
+            </div>
+        </aside>
+
+        <main id="main-content">
+            <div id="view-dashboard" class="view-container"></div>
+            <div id="view-projects" class="view-container" style="display: none;"></div>
+            <div id="view-clients" class="view-container" style="display: none;"></div>
+            <div id="view-budget" class="view-container" style="display: none;"></div>
+            <div id="view-planning" class="view-container" style="display: none;"></div>
+            
+            <!-- PRINT-ONLY SECTIONS -->
+            <div id="print-detailed-report" class="print-section">
+                <div class="print-header">
+                    <div class="print-header-title">MEDICIONES Y PRESUPUESTO</div>
+                    <div class="print-header-item"><div class="print-header-label">PROYECTO:</div><div id="p-project"></div></div>
+                    <div class="print-header-item"><div class="print-header-label">SITUACION:</div><div id="p-situation"></div></div>
+                    <div class="print-header-item"><div class="print-header-label">PROPIEDAD:</div><div id="p-property"></div></div>
+                    <div class="print-header-item"><div class="print-header-label">MUSEOLOGO:</div><div id="p-author"></div></div>
+                    <div class="print-header-item"><div class="print-header-label">LOCALIDAD:</div><div id="p-location"></div></div>
+                </div>
+                <div id="print-tree-root"></div>
+            </div>
+
+            <div id="print-summary-report" class="print-section">
+                <div class="print-header">
+                    <div class="print-header-title">RESUMEN DE PRESUPUESTO</div>
+                </div>
+                <div id="print-summary-root"></div>
+                
+                <div class="certification-text" style="margin-top: 50px;">
+                    Asciende el presente documento a la expresada cantidad de<br>
+                    <span id="txt-amount-words" style="font-weight: 800;"></span> (<span id="txt-amount-numeric"></span> EUROS)
+                </div>
+                
+                <div class="signature-block">
+                    <div id="p-signature-location" style="margin-bottom: 20px;"></div>
+                    <div id="p-signature-title" style="font-weight: 700;"></div>
+                    <div id="p-signature-name"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <footer class="print-footer">
+        Documento generado automáticamente por MusaMediciones | Musaraña Gestión de Museos | Página <span class="page-number"></span>
+    </footer>
+
+    <!-- Login Overlay -->
+    <div id="login-overlay" style="position: fixed; inset: 0; background: rgba(255,255,255,0.9); backdrop-filter: blur(10px); z-index: 10000; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 1.5rem; animation: fadeIn 0.3s ease;">
+        <img src="assets/logo.png" alt="Musaraña" style="width: 150px; margin-bottom: 1rem;">
+        <h2 style="font-weight: 800; color: var(--primary);">MusaMediciones Cloud</h2>
+        <div style="background: white; padding: 2rem; border-radius: var(--radius-xl); box-shadow: 0 20px 40px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center;">
+            <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Inicia sesión para entrar a tu cuenta en la nube.</p>
+            <input type="email" id="login-email" placeholder="Correo Electrónico" style="width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 0.8rem; font-size: 1rem; text-align: center;">
+            <input type="password" id="login-key" placeholder="Contraseña" style="width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1rem; font-size: 1rem; text-align: center;">
+            <button id="btn-login" class="btn-musa" style="width: 100%; padding: 1rem;">Entrar</button>
+            <div id="login-error" style="color: #ef4444; font-size: 0.8rem; margin-top: 1rem; display: none;">Clave incorrecta. Inténtalo de nuevo.</div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/firebase-config.js?v=2"></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, setDoc, deleteDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        window.firebase = { initializeApp, getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, getFirestore, collection, addDoc, getDocs, doc, setDoc, deleteDoc, query, where, onSnapshot };
+    </script>
+    <script type="module" src="js/state.js?v=2"></script>
+    <script type="module" src="js/components/dashboard.js?v=2"></script>
+    <script type="module" src="js/components/budget.js?v=2"></script>
+    <script type="module" src="js/components/project-manager.js?v=2"></script>
+    <script type="module" src="js/components/client-manager.js?v=2"></script>
+    <script type="module" src="js/components/gantt.js?v=2"></script>
+    <script type="module" src="js/app.js?v=2"></script>
+</body>
+</html>
