@@ -38,10 +38,14 @@ class App {
     }
 
     initLogin() {
-        if (!this.btnLogin || !this.loginOverlay) return;
+        if (!this.btnLogin || !this.loginOverlay) {
+            console.error("MusaApp: Elementos de login no encontrados.");
+            return;
+        }
 
         // Intentamos inicializar Firebase Auth temprano para el onAuthStateChanged
         const setupListener = () => {
+            console.log("MusaApp: Configurando Auth Listener...");
             if (window.firebase && window.state) {
                 window.state.initFirebaseAppOnly();
                 const auth = window.state.auth;
@@ -67,19 +71,21 @@ class App {
 
         // El event listener siempre debe registrarse
         this.btnLogin.addEventListener('click', async () => {
+            console.log("MusaApp: Click en botón Entrar detectado.");
+            
             // Asegurarnos de tener auth y el listener
             if (!this.authListenerAttached) {
-                setupListener();
+                const ready = setupListener();
+                if (!ready) {
+                    alert("Error: Firebase o el estado de la app no están listos. Comprueba tu conexión o si hay bloqueadores de anuncios.");
+                    return;
+                }
             }
 
             const auth = window.state ? window.state.auth : null;
 
             if (!auth) {
-                if (this.loginError) {
-                    this.loginError.style.display = 'block';
-                    this.loginError.textContent = "Error interno: Auth no inicializado.";
-                }
-                alert("Error crítico: Firebase no se pudo iniciar. Esto suele deberse a que la importación fue bloqueada por tu navegador o adblocker.");
+                alert("Error: No se pudo obtener el objeto Auth de Firebase.");
                 return;
             }
 
@@ -87,21 +93,20 @@ class App {
             const pwd = this.loginKeyInput ? this.loginKeyInput.value.trim() : "";
             
             if (!email || !pwd) {
-                if (this.loginError) {
-                    this.loginError.style.display = 'block';
-                    this.loginError.textContent = "Introduce correo y contraseña.";
-                }
+                alert("Por favor, introduce tu correo y contraseña.");
                 return;
             }
 
             try {
                 this.btnLogin.disabled = true;
-                this.btnLogin.textContent = "Iniciando...";
+                this.btnLogin.textContent = "Conectando...";
                 
+                console.log("MusaApp: Intentando Sign In para:", email);
                 await window.firebase.signInWithEmailAndPassword(auth, email, pwd);
                 
                 this.btnLogin.textContent = "¡Entrando!";
-                // Aunque el onAuthStateChanged debería dispararse, forzamos por si acaso
+                
+                // Fallback manual
                 setTimeout(() => {
                     if (this.loginOverlay && this.loginOverlay.style.display !== 'none') {
                         this.loginOverlay.style.display = 'none';
@@ -115,16 +120,12 @@ class App {
                 console.error("Login Error:", err);
                 
                 let msg = "Error al iniciar sesión.";
-                if (err.code === 'auth/wrong-password') msg = "Contraseña incorrecta.";
-                else if (err.code === 'auth/user-not-found') msg = "Usuario no encontrado.";
-                else msg = "Error: " + err.message;
+                if (err.code === 'auth/wrong-password') msg = "La contraseña es incorrecta.";
+                else if (err.code === 'auth/user-not-found') msg = "No existe ningún usuario con ese correo.";
+                else if (err.code === 'auth/unauthorized-domain') msg = "Este dominio no está autorizado en Firebase. Añádelo en la consola de Firebase.";
+                else msg = "Error de Firebase: " + err.message;
 
-                if (this.loginError) {
-                    this.loginError.style.display = 'block';
-                    this.loginError.textContent = msg;
-                } else {
-                    alert(msg);
-                }
+                alert(msg);
             }
         });
 
