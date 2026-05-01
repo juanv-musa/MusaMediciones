@@ -284,13 +284,13 @@
             <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.9rem;">Inicia sesión para entrar a tu cuenta en la nube.</p>
             <input type="email" id="login-email" placeholder="Correo Electrónico" style="width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 0.8rem; font-size: 1rem; text-align: center;">
             <input type="password" id="login-key" placeholder="Contraseña" style="width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 1rem; font-size: 1rem; text-align: center;">
-            <button id="btn-login" class="btn-musa" style="width: 100%; padding: 1rem;">Entrar</button>
+            <button id="btn-login" onclick="window.emergencyLogin()" class="btn-musa" style="width: 100%; padding: 1rem;">Entrar</button>
             <div id="login-error" style="color: #ef4444; font-size: 0.8rem; margin-top: 1rem; display: none;">Clave incorrecta. Inténtalo de nuevo.</div>
         </div>
     </div>
 
     <!-- Scripts -->
-    <script src="js/firebase-config.js?v=3"></script>
+    <script src="js/firebase-config.js?v=4"></script>
     <script type="module">
         console.log("MusaApp: Iniciando carga de Firebase SDK...");
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
@@ -298,13 +298,41 @@
         import { getFirestore, collection, addDoc, getDocs, doc, setDoc, deleteDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
         window.firebase = { initializeApp, getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, getFirestore, collection, addDoc, getDocs, doc, setDoc, deleteDoc, query, where, onSnapshot };
         console.log("MusaApp: Firebase SDK cargado correctamente.");
+
+        window.emergencyLogin = async function() {
+            console.log("MusaApp: BOTÓN PULSADO (Emergencia)");
+            if (!window.firebase) { alert("Error: Firebase no ha cargado correctamente."); return; }
+            if (!window.state) { alert("Error: El estado de la app (state.js) no está disponible."); return; }
+            
+            const email = document.getElementById('login-email').value;
+            const pass = document.getElementById('login-key').value;
+            
+            if (!email || !pass) { alert("Por favor, introduce tu correo y contraseña."); return; }
+            
+            const btn = document.getElementById('btn-login');
+            btn.disabled = true;
+            btn.textContent = "Conectando...";
+
+            try {
+                if (!window.state.auth) window.state.initFirebaseAppOnly();
+                const auth = window.state.auth;
+                await window.firebase.signInWithEmailAndPassword(auth, email, pass);
+                alert("¡Login con éxito! Entrando...");
+                location.reload(); 
+            } catch (e) {
+                btn.disabled = false;
+                btn.textContent = "Entrar";
+                console.error("MusaApp: Error de emergencia:", e);
+                alert("Error en el login: " + e.message);
+            }
+        };
     </script>
-    <script type="module" src="js/state.js?v=3"></script>
-    <script type="module" src="js/components/dashboard.js?v=3"></script>
-    <script type="module" src="js/components/budget.js?v=3"></script>
-    <script type="module" src="js/components/project-manager.js?v=3"></script>
-    <script type="module" src="js/components/client-manager.js?v=3"></script>
-    <script type="module" src="js/components/gantt.js?v=3"></script>
-    <script type="module" src="js/app.js?v=3"></script>
+    <script type="module" src="js/state.js?v=4"></script>
+    <script type="module" src="js/components/dashboard.js?v=4"></script>
+    <script type="module" src="js/components/budget.js?v=4"></script>
+    <script type="module" src="js/components/project-manager.js?v=4"></script>
+    <script type="module" src="js/components/client-manager.js?v=4"></script>
+    <script type="module" src="js/components/gantt.js?v=4"></script>
+    <script type="module" src="js/app.js?v=4"></script>
 </body>
 </html>
