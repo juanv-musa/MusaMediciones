@@ -1,3 +1,5 @@
+console.log("MusaApp: ARCHIVO JS CARGADO CORRECTAMENTE");
+
 /**
  * MusaMediciones Application Controller
  * High-Fidelity Presto/Gropit report engine
